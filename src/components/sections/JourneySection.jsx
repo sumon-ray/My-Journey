@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { gsap } from "gsap"
+import { gsap } from "gsap" // Removed ScrollTrigger from here
 import { Heart, BookOpen, Code, Rocket, Award, ExternalLink } from "lucide-react"
 import { Card, CardContent } from "../ui/card" // Adjusted import path
 
@@ -29,28 +29,65 @@ export default function JourneySection() {
       },
     )
 
-    // Timeline items and icon animations
+    // GSAP animations for timeline items based on screen size
+    gsap.matchMedia({
+      // Changed from ScrollTrigger.matchMedia to gsap.matchMedia
+      // Mobile animation: items fade in and slide up
+      "(max-width: 767px)": () => {
+        gsap.fromTo(
+          ".timeline-item",
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 70%",
+              end: "bottom 30%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        )
+      },
+      // Desktop animation: items slide in from left/right
+      "(min-width: 768px)": () => {
+        gsap.fromTo(
+          ".timeline-item",
+          { x: (index) => (index % 2 === 0 ? -100 : 100), opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 1,
+            stagger: 0.3,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 70%",
+              end: "bottom 30%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        )
+      },
+    })
+
+    // Icon circle animation (applies to both)
     gsap.fromTo(
-      ".timeline-item",
-      { x: (index) => (index % 2 === 0 ? -100 : 100), opacity: 0 },
+      ".timeline-item .icon-circle",
+      { scale: 0, rotation: 360 },
       {
-        x: 0,
-        opacity: 1,
-        duration: 1,
-        stagger: 0.3,
-        ease: "power3.out",
+        scale: 1,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.7)",
+        stagger: 0.1,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 70%",
-          end: "bottom 30%",
           toggleActions: "play none none reverse",
-          onEnter: () => {
-            gsap.fromTo(
-              ".timeline-item .icon-circle",
-              { scale: 0, rotation: 360 },
-              { scale: 1, rotation: 0, duration: 0.8, ease: "back.out(1.7)", stagger: 0.1 },
-            )
-          },
         },
       },
     )
@@ -72,7 +109,7 @@ export default function JourneySection() {
         dot: "bg-red-400",
         shadow: "hover:shadow-red-500/10",
       },
-      side: "left",
+      side: "left", // This 'side' property will now primarily control desktop layout
     },
     {
       icon: BookOpen,
@@ -166,120 +203,79 @@ export default function JourneySection() {
 
           {/* Timeline */}
           <div className="relative">
-            {/* Timeline Line */}
+            {/* Main Timeline Line (hidden on mobile, visible on desktop) */}
             <div
               ref={timelineLineRef}
-              className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full"
+              className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full hidden md:block"
             ></div>
 
             <div className="space-y-16">
               {journeySteps.map((step, index) => {
                 const Icon = step.icon
-                const isLeft = step.side === "left"
+                const isLeft = step.side === "left" // Still used for desktop layout
 
                 return (
-                  <div key={index} className="timeline-item flex items-center">
-                    {isLeft ? (
-                      <>
-                        <div className="w-1/2 pr-8 text-right">
-                          <Card
-                            className={`bg-white/5 backdrop-blur-xl ${step.colorClasses.border} hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl ${step.colorClasses.shadow}`}
+                  <div key={index} className={`timeline-item flex flex-col md:flex-row items-center relative`}>
+                    {/* Timeline Dot */}
+                    <div
+                      className={`absolute left-0 md:left-1/2 md:transform md:-translate-x-1/2 
+                                  -translate-x-1/2 
+                                  w-8 h-8 ${step.colorClasses.dot} rounded-full border-4 border-slate-900 z-10`}
+                    ></div>
+
+                    {/* Card Content */}
+                    <div className={`w-full md:w-1/2 relative ${isLeft ? "md:pr-8" : "md:pl-8"}`}>
+                      <Card
+                        className={`bg-white/5 backdrop-blur-xl ${step.colorClasses.border} hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl ${step.colorClasses.shadow}
+                                    pl-12 md:pl-8 ${isLeft ? "md:text-right" : "md:text-left"}`}
+                      >
+                        <CardContent className="p-8">
+                          <div
+                            className={`flex items-center mb-4 ${
+                              isLeft ? "md:justify-end" : "md:justify-start"
+                            } justify-start`}
                           >
-                            <CardContent className="p-8">
-                              <div className="flex items-center justify-end mb-4">
-                                <div>
-                                  <h3 className="text-2xl font-semibold text-white">{step.title}</h3>
-                                  <p className={step.colorClasses.text}>{step.period}</p>
-                                </div>
-                                <div
-                                  className={`icon-circle w-16 h-16 ${step.colorClasses.bg} rounded-2xl flex items-center justify-center ml-6`}
+                            <div
+                              className={`icon-circle w-16 h-16 ${step.colorClasses.bg} rounded-2xl flex items-center justify-center mr-6`}
+                            >
+                              <Icon className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-semibold text-white">{step.title}</h3>
+                              <p className={step.colorClasses.text}>{step.period}</p>
+                            </div>
+                          </div>
+                          <p className="text-white/80 leading-relaxed text-lg mb-4">{step.description}</p>
+                          {step.technologies && (
+                            <div
+                              className={`flex flex-wrap gap-2 mb-4 ${
+                                isLeft ? "md:justify-end" : "md:justify-start"
+                              } justify-start`}
+                            >
+                              {step.technologies.map((tech, techIndex) => (
+                                <span
+                                  key={techIndex}
+                                  className={`px-3 py-1 ${step.colorClasses.bgAccent} ${step.colorClasses.text} rounded-full text-sm`}
                                 >
-                                  <Icon className="w-8 h-8 text-white" />
-                                </div>
-                              </div>
-                              <p className="text-white/80 leading-relaxed text-lg mb-4">{step.description}</p>
-                              {step.technologies && (
-                                <div className="flex flex-wrap gap-2 justify-end mb-4">
-                                  {step.technologies.map((tech, techIndex) => (
-                                    <span
-                                      key={techIndex}
-                                      className={`px-3 py-1 ${step.colorClasses.bgAccent} ${step.colorClasses.text} rounded-full text-sm`}
-                                    >
-                                      {tech}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              {step.certificateLink && (
-                                <a
-                                  href={step.certificateLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`interactive inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium ${step.colorClasses.bgAccent} ${step.colorClasses.text} border ${step.colorClasses.border} hover:scale-105 transition-transform duration-300`}
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  <span>View Certificate</span>
-                                </a>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </div>
-                        <div
-                          className={`w-8 h-8 ${step.colorClasses.dot} rounded-full border-4 border-slate-900 z-10`}
-                        ></div>
-                        <div className="w-1/2 pl-8"></div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-1/2 pr-8"></div>
-                        <div
-                          className={`w-8 h-8 ${step.colorClasses.dot} rounded-full border-4 border-slate-900 z-10`}
-                        ></div>
-                        <div className="w-1/2 pl-8">
-                          <Card
-                            className={`bg-white/5 backdrop-blur-xl ${step.colorClasses.border} hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl ${step.colorClasses.shadow}`}
-                          >
-                            <CardContent className="p-8">
-                              <div className="flex items-center mb-4">
-                                <div
-                                  className={`icon-circle w-16 h-16 ${step.colorClasses.bg} rounded-2xl flex items-center justify-center mr-6`}
-                                >
-                                  <Icon className="w-8 h-8 text-white" />
-                                </div>
-                                <div>
-                                  <h3 className="text-2xl font-semibold text-white">{step.title}</h3>
-                                  <p className={step.colorClasses.text}>{step.period}</p>
-                                </div>
-                              </div>
-                              <p className="text-white/80 leading-relaxed text-lg mb-4">{step.description}</p>
-                              {step.technologies && (
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                  {step.technologies.map((tech, techIndex) => (
-                                    <span
-                                      key={techIndex}
-                                      className={`px-3 py-1 ${step.colorClasses.bgAccent} ${step.colorClasses.text} rounded-full text-sm`}
-                                    >
-                                      {tech}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              {step.certificateLink && (
-                                <a
-                                  href={step.certificateLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`interactive inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium ${step.colorClasses.bgAccent} ${step.colorClasses.text} border ${step.colorClasses.border} hover:scale-105 transition-transform duration-300`}
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  <span>View Certificate</span>
-                                </a>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </>
-                    )}
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {step.certificateLink && (
+                            <a
+                              href={step.certificateLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`interactive inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium ${step.colorClasses.bgAccent} ${step.colorClasses.text} border ${step.colorClasses.border} hover:scale-105 transition-transform duration-300`}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              <span>View Certificate</span>
+                            </a>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 )
               })}
