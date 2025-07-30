@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0f172a; /* Fallback for background effects */
+  cursor: none; /* Hide default cursor */
+}
+
+/* Hide custom cursor on mobile */
+@media (max-width: 767px) {
+  body {
+    cursor: default;
+  }
+}
