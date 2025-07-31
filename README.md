@@ -43,7 +43,7 @@ This website showcases my personal journey in technology, from childhood curiosi
 
 ```
 src/
-├── app/                    # Next.js app directory
+├── app/                    # React.js app directory
 ├── components/            
 │   ├── animations/        # Animation components
 │   │   ├── BackgroundEffects.jsx
